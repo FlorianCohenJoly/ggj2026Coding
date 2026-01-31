@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class JumpAbility : MonoBehaviour
+public class JumpAbility : Mask
 {
     public float jumpForce = 6f;
     private CharacterController controller;
