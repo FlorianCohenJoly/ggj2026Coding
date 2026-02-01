@@ -58,8 +58,8 @@ public class PlayerManager : MonoBehaviour
 
     void Start()
     {
-       /* Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;*/
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Update()
@@ -69,10 +69,11 @@ public class PlayerManager : MonoBehaviour
         ApplyGravity();
         CameraObstruction();
         InteractItem();
-      /*  if (menuAction.triggered)
+        if (menuAction.triggered)
         {
+            Debug.Log("Menu opened");
             uIManager.OpenMenu();
-        }*/
+        }
     }
 
     void InteractItem()
