@@ -5,11 +5,15 @@ using UnityEngine.InputSystem;
 public class PlayerManager : MonoBehaviour
 {
     [Header("References")]
-    public Transform cameraPivot;
     public PlayerInput playerInput;
+    public float gravity = -9.81f;
+    private Vector3 velocity;
+    public UIManager uIManager;
+    public CharacterController controller;
 
     [Header("Movement")]
     public float moveSpeed = 5f;
+    public float rotationSpeed = 10f;
 
     [Header("Look")]
     public float mouseSensitivity = 120f;
@@ -17,44 +21,83 @@ public class PlayerManager : MonoBehaviour
     public float maxY = 60f;
 
     InputAction moveAction;
-    InputAction lookAction;
+    InputAction menuAction;
+    InputAction scrollAction;
+    InputAction interactAction;
 
     private Transform player;
-    private Collider playerCollider;
     public Camera cam;
     public Material blindMaterial;
-    public Material realMaterial;
+    public Material realMaterial;  // a revoir 
     public InventoryManage inventory;
+    public Transform model;
 
     float xRotation = 0f;
     private List<MeshRenderer> switchToTranspa = new List<MeshRenderer>();
+    private float coyoteTime = 0.2f;     
+    private float coyoteTimeCounter;
+
+    public Animator animator;
+    public AudioSource audioSource;
+    public AudioClip jumpSound;
+    public AudioClip landSound;
+    public AudioClip footstep;
+    public AudioClip lootSound;
+
+    private bool wasGrounded;
 
 
     void Awake()
     {
         moveAction = playerInput.actions["Move"];
-        lookAction = playerInput.actions["Look"];
+        menuAction = playerInput.actions["Menu"];
+        scrollAction = playerInput.actions["Scroll"];
+        interactAction = playerInput.actions["Jump"];
         player = transform;
-        playerCollider = GetComponent<Collider>();
     }
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+       /* Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;*/
     }
 
     void Update()
     {
+        ItemChoice();
         HandleMovement();
-        HandleLook();
+        ApplyGravity();
         CameraObstruction();
+        InteractItem();
+      /*  if (menuAction.triggered)
+        {
+            uIManager.OpenMenu();
+        }*/
     }
 
-    void OnCollisionEnter(Collision collision)
+    void InteractItem()
     {
-        if (collision.transform.CompareTag("Mask"))
+        if (interactAction.triggered && inventory.currentSelected != null)
         {
+            inventory.currentSelected.UseMask();
+        }
+    }
+
+    void ItemChoice()
+    {
+        Vector2 scroll = scrollAction.ReadValue<Vector2>();
+        if (scroll.y > 0.1f)
+            inventory.NextSlot();
+        else if (scroll.y < -0.1f)
+            inventory.PreviousSlot();
+    }
+
+    public void OnTriggerEnter(Collider collision)
+    {
+        if (collision.CompareTag("Mask"))
+        {
+            if(audioSource && lootSound)
+                audioSource.PlayOneShot(lootSound);
             collision.gameObject.SetActive(false);
             inventory.AddMask();
         }
@@ -117,28 +160,75 @@ public class PlayerManager : MonoBehaviour
     {
         Vector2 moveInput = moveAction.ReadValue<Vector2>();
 
-        Vector3 move =
-            transform.forward * moveInput.y +
-            transform.right * moveInput.x;
+        // Direction caméra (à plat)
+        Vector3 camForward = cam.transform.forward;
+        Vector3 camRight = cam.transform.right;
 
-        transform.position += move * moveSpeed * Time.deltaTime;
+        camForward.y = 0;
+        camRight.y = 0;
+
+        camForward.Normalize();
+        camRight.Normalize();
+    
+        Vector3 move = camForward * moveInput.y + camRight * moveInput.x;
+        animator.SetBool("IsMoving", move.magnitude > 0.1f);
+        if(move.magnitude > 0.1f && controller.isGrounded)
+        {
+            if(!audioSource.isPlaying)
+                audioSource.PlayOneShot(footstep);
+        }
+        controller.Move(move * moveSpeed * Time.deltaTime);
+
+        ApplyGravity();
+
+        RotateModel(move);
     }
 
-    void HandleLook()
+    void RotateModel(Vector3 move)
     {
-        Vector2 lookInput = lookAction.ReadValue<Vector2>();
+        if (move.sqrMagnitude < 0.001f)
+            return;
 
-        float mouseX = lookInput.x * mouseSensitivity;
-        float mouseY = lookInput.y * mouseSensitivity;
-
-        xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, minY, maxY);
-
-        cameraPivot.localRotation = Quaternion.Lerp(
-            cameraPivot.localRotation,
-            Quaternion.Euler(xRotation, 0, 0),
-            0.1f // vitesse de lissage
+        Quaternion targetRot = Quaternion.LookRotation(move);
+        model.rotation = Quaternion.Slerp(
+            model.rotation,
+            targetRot,
+            rotationSpeed * Time.deltaTime
         );
-        transform.Rotate(Vector3.up * mouseX);
+    }
+
+    public void Jump(float jumpForce)
+    {
+        if (controller.isGrounded)
+        {
+            animator.SetTrigger("Jump");
+            velocity.y = jumpForce;
+           //coyoteTimeCounter = 0f;
+           if(audioSource && jumpSound)
+            audioSource.PlayOneShot(jumpSound);
+        }
+    }
+
+    void ApplyGravity()
+    {
+
+        animator.SetBool("IsGrounded", controller.isGrounded);
+        if (controller.isGrounded)
+        {
+            if (velocity.y < 0)
+                velocity.y = -2f; // 👈 petite force vers le bas pour rester collé au sol
+            if(!wasGrounded) // si avant on était en l'air et maintenant au sol
+            {
+                if(audioSource && landSound)
+                    audioSource.PlayOneShot(landSound);
+            }
+        }
+        else
+        {
+            velocity.y += gravity * Time.deltaTime;
+        }
+
+        controller.Move(velocity * Time.deltaTime);
+        wasGrounded = controller.isGrounded;
     }
 }

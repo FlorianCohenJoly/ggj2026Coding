@@ -8,34 +8,39 @@ public class InventoryManage : MonoBehaviour
     public class InventorySlot
     {
         public Mask mask;
-        public bool isOccupied;
+        public bool isOccuped;
     }
 
     [Header("Inventaire")]
     public InventorySlot[] slots;
-    private int currentIndex = 0;
+    public int currentIndex = 0;
     private int deblocked = 0;
+    public Mask currentSelected;
 
     public void AddMask()
     {
         deblocked++;
         uIManager.itemPanels[deblocked - 1].itemImg.gameObject.SetActive(true);
-        slots[deblocked - 1].isOccupied = true;
+        slots[deblocked - 1].isOccuped = true;
     }
 
-     // Sélectionner le slot suivant
-    public void NextSlot()
+   public void NextSlot()
     {
         int startIndex = currentIndex;
 
         do
         {
             currentIndex = (currentIndex + 1) % slots.Length;
-        } while (!slots[currentIndex].isOccupied && currentIndex != startIndex);
 
+            if (slots[currentIndex].isOccuped)
+            {
+                ApplySelection();
+                return;
+            }
+
+        } while (currentIndex != startIndex);
     }
 
-    // Sélectionner le slot précédent
     public void PreviousSlot()
     {
         int startIndex = currentIndex;
@@ -44,8 +49,30 @@ public class InventoryManage : MonoBehaviour
         {
             currentIndex--;
             if (currentIndex < 0) currentIndex = slots.Length - 1;
-        } while (!slots[currentIndex].isOccupied && currentIndex != startIndex);
 
+            if (slots[currentIndex].isOccuped)
+            {
+                ApplySelection();
+                return;
+            }
+
+        } while (currentIndex != startIndex);
+    }
+
+    void ApplySelection()
+    {
+        uIManager.SelectItem(currentIndex);
+
+        if (currentSelected != null)
+        {
+            currentSelected.UnUsedMask();
+            currentSelected.gameObject.SetActive(false);
+        }
+
+        currentSelected = slots[currentIndex].mask;
+
+        if (currentSelected != null)
+            currentSelected.gameObject.SetActive(true);
     }
 
 /*  public Mask GetCurrentMask()

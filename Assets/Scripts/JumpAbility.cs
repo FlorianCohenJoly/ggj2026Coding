@@ -3,25 +3,12 @@ using UnityEngine;
 public class JumpAbility : Mask
 {
     public float jumpForce = 6f;
-    private CharacterController controller;
+    public PlayerManager controller;
     private Vector3 velocity;
-    public bool enabledAbility;
 
-    void Start()
+    public override void UseMask()
     {
-        controller = GetComponent<CharacterController>();
-    }
-
-    void Update()
-    {
-        if (!enabledAbility) return;
-
-        if (controller.isGrounded && Input.GetButtonDown("Jump"))
-        {
-            velocity.y = jumpForce;
-        }
-
-        velocity.y += Physics.gravity.y * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        Debug.Log("jump used mask");
+        controller.Jump(jumpForce);
     }
 }
