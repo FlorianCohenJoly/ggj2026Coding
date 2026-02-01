@@ -4,7 +4,7 @@ using UnityEngine;
 public class InventoryManage : MonoBehaviour
 {
     public UIManager uIManager;
-        [System.Serializable]
+    [System.Serializable]
     public class InventorySlot
     {
         public Mask mask;
@@ -20,11 +20,15 @@ public class InventoryManage : MonoBehaviour
     public void AddMask()
     {
         deblocked++;
+        Debug.Log("New mask deblocked: " + uIManager);
+        Debug.Log("New mask deblocked: " + uIManager.itemPanels.Count);
+        Debug.Log("New mask deblocked: " + uIManager.itemPanels[deblocked - 1]);
+        Debug.Log("New mask deblocked: " + uIManager.itemPanels[deblocked - 1].itemImg);
         uIManager.itemPanels[deblocked - 1].itemImg.gameObject.SetActive(true);
         slots[deblocked - 1].isOccuped = true;
     }
 
-   public void NextSlot()
+    public void NextSlot()
     {
         int startIndex = currentIndex;
 
@@ -75,10 +79,10 @@ public class InventoryManage : MonoBehaviour
             currentSelected.gameObject.SetActive(true);
     }
 
-/*  public Mask GetCurrentMask()
-    {
-        if (slots.Length == 0 || !slots[currentIndex].isOccupied) return null;
-        return slots[currentIndex].mask;
-    }*/
+    /*  public Mask GetCurrentMask()
+        {
+            if (slots.Length == 0 || !slots[currentIndex].isOccupied) return null;
+            return slots[currentIndex].mask;
+        }*/
 
 }
