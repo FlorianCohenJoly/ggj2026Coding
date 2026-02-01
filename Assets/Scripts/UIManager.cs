@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     public Button continueBtn;
     public Button settingBtn;
     public Button quitBtn;
+    public Button backBtn;
 
     public GameObject menuPanel;
     public GameObject settingsPanel;
@@ -19,15 +20,21 @@ public class UIManager : MonoBehaviour
     {
         continueBtn.onClick.AddListener(() =>
         {
-            
+            menuPanel.SetActive(false);
         });
         settingBtn.onClick.AddListener(() =>
         {
-            
+            menuPanel.SetActive(false);
+            settingsPanel.SetActive(true);
         });
         quitBtn.onClick.AddListener(() =>
         {
             Application.Quit();
+        });
+        backBtn.onClick.AddListener(() =>
+        {
+            settingsPanel.SetActive(false);
+            menuPanel.SetActive(true);
         });
     }
     
